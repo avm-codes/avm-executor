@@ -1,2 +1,4 @@
 .env
 .DS_Store
+local_test.sh
+build-and-push.sh
