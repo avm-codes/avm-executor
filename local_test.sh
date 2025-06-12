@@ -1,6 +1,10 @@
 #podman build -t executor .
 #podman run -p 9000:8080 executor
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+
+# set the base url
+BASE_URL="http://localhost:9000/2015-03-31/functions/function/invocations"
+
+curl -XPOST "$BASE_URL" \
   -H "Content-Type: application/json" \
   -d '{
         "language": "python",
@@ -8,7 +12,7 @@ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
       }'
 
 echo "\n--------------------------------\n"
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+curl -XPOST "$BASE_URL" \
   -H "Content-Type: application/json" \
   -d '{
         "language": "python",
@@ -20,7 +24,7 @@ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
       }'
 
 echo "\n--------------------------------\n"
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+curl -XPOST "$BASE_URL" \
   -H "Content-Type: application/json" \
   -d '{
         "language": "python",
@@ -33,7 +37,7 @@ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
 
 
 echo "\n--------------------------------\n"
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+curl -XPOST "$BASE_URL" \
   -H "Content-Type: application/json" \
   -d '{
         "language": "python",
