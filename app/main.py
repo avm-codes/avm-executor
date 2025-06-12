@@ -34,7 +34,15 @@ def executor_handler(payload):
             inputs=inputs,
             env_vars=env_vars
         )
-        return json.dumps(result)
+        response = {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps(result)
+        }
+        return response
     except ValueError as e:
         raise ValueError(f"ValueError: {str(e)}")
     except Exception as e:
