@@ -49,9 +49,9 @@ class PythonExecutor(BaseExecutor):
         
         env_code = "\n".join([f"os.environ['{k}'] = '{v}'" for k, v in env_vars.items()])
         if env_code:
-            code = f"import os\nimport json\n{env_code}\n{code}"
+            code = f"import os\nimport json\nimport logging\nlogging.basicConfig(level=logging.ERROR)\n{env_code}\n{code}"
         else:
-            code = f"import json\n{code}"
+            code = f"import json\nimport logging\nlogging.basicConfig(level=logging.ERROR)\n{code}"
 
         input_code = "\n".join([f"{k} = {repr(v)}" for k, v in inputs.items()])
         if input_code:
