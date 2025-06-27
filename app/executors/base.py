@@ -10,7 +10,7 @@ import json
 logger = logging.getLogger(__name__)
 
 class BaseExecutor(ABC):
-    EXECUTION_TIMEOUT = 180
+    EXECUTION_TIMEOUT = 360
 
     @abstractmethod
     def get_dependencies(self, code: str) -> List[str]:
