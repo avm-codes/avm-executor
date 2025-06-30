@@ -9,8 +9,13 @@ from .base import BaseExecutor
 class TypeScriptExecutor(BaseExecutor):
     def __init__(self):
         super().__init__()
+        import sys
+        print(f"[DEBUG] sys.executable: {sys.executable}")
+        print(f"[DEBUG] os.environ['PATH']: {os.environ.get('PATH')}")
         self.npm_path = shutil.which('npm')
         self.npx_path = shutil.which('npx')
+        print(f"[DEBUG] npm_path: {self.npm_path}")
+        print(f"[DEBUG] npx_path: {self.npx_path}")
         if not self.npm_path or not self.npx_path:
             raise RuntimeError("npm and npx must be installed and available in PATH")
 
@@ -37,6 +42,16 @@ class TypeScriptExecutor(BaseExecutor):
         if not dependencies:
             return
 
+        import os
+        import subprocess
+        print(f"[DEBUG] venv_path: {venv_path}")
+        print(f"[DEBUG] venv_path contents: {os.listdir(venv_path)}")
+        print(f"[DEBUG] venv_path permissions: {oct(os.stat(venv_path).st_mode)}")
+        try:
+            subprocess.run(["ls", "-l", venv_path], check=False)
+        except Exception as e:
+            print(f"[DEBUG] Could not list venv_path: {e}")
+
         package_json = {
             "dependencies": {dep: "latest" for dep in dependencies},
             "scripts": {
@@ -60,8 +75,74 @@ class TypeScriptExecutor(BaseExecutor):
         
         with open(os.path.join(venv_path, "tsconfig.json"), "w") as f:
             json.dump(tsconfig, f)
+
+        # Set npm/yarn environment to use /tmp for cache and home
+        npm_env = {**os.environ, "HOME": "/tmp", "NPM_CONFIG_CACHE": "/tmp/.npm", "NO_UPDATE_NOTIFIER": "1"}
         
-        subprocess.run([self.npm_path, "install"], cwd=venv_path, check=True)
+        # Configure npm for Lambda environment
+        npm_config = [
+            "--no-audit",  # Skip audit to speed up installation
+            "--no-fund",   # Skip funding message
+            "--no-optional",  # Skip optional dependencies
+            "--production",   # Only install production dependencies
+            "--silent",       # Reduce output
+            "--no-update-notifier"  # Suppress update notices (ensure this is last)
+        ]
+        
+        try:
+            # First try with npm install
+            result = subprocess.run(
+                [self.npm_path, "install"] + npm_config, 
+                cwd=venv_path, 
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+                env=npm_env
+            )
+            print(f"npm install successful: {result.stdout}")
+        except subprocess.CalledProcessError as e:
+            print(f"npm install failed: {e.stderr}")
+            # If npm install fails, try with npm ci (clean install)
+            try:
+                result = subprocess.run(
+                    [self.npm_path, "ci"] + npm_config, 
+                    cwd=venv_path, 
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    env=npm_env
+                )
+                print(f"npm ci successful: {result.stdout}")
+            except subprocess.CalledProcessError as e2:
+                print(f"npm ci failed: {e2.stderr}")
+                # If both fail, try with yarn as fallback
+                yarn_path = shutil.which('yarn')
+                if yarn_path:
+                    try:
+                        result = subprocess.run(
+                            [yarn_path, "install", "--production", "--silent"],
+                            cwd=venv_path,
+                            check=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=300,
+                            env=npm_env
+                        )
+                        print(f"yarn install successful: {result.stdout}")
+                    except subprocess.CalledProcessError as e3:
+                        error_msg = f"Failed to install dependencies with npm and yarn. npm error: {e.stderr}, npm ci error: {e2.stderr}, yarn error: {e3.stderr}"
+                        print(error_msg)
+                        raise RuntimeError(error_msg)
+                else:
+                    error_msg = f"Failed to install dependencies with npm. npm error: {e.stderr}, npm ci error: {e2.stderr}"
+                    print(error_msg)
+                    raise RuntimeError(error_msg)
+        except subprocess.TimeoutExpired:
+            error_msg = "npm install timed out after 5 minutes"
+            print(error_msg)
+            raise RuntimeError(error_msg)
 
     def _get_file_extension(self) -> str:
         return ".ts"
