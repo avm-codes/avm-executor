@@ -95,8 +95,17 @@ class TypeScriptExecutor(BaseExecutor):
 // Wrapper to manage the result
 let result: any = null;
 try {
-    if (typeof output !== 'undefined') {
-        result = output;
+    // Use eval to safely check if output variable exists without TypeScript compilation errors
+    const outputExists = (() => {
+        try {
+            return typeof eval('output') !== 'undefined';
+        } catch {
+            return false;
+        }
+    })();
+    
+    if (outputExists) {
+        result = (eval('output') as any);
     }
 } catch (error) {
     console.error('Error capturing result:', error);
