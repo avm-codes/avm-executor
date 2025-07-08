@@ -1,4 +1,5 @@
 from .executors import get_executor
+from .executors.base import BaseExecutor
 import logging
 import json
 import dotenv
@@ -14,7 +15,7 @@ logging.basicConfig(
     ]
 )
 
-def executor_handler(payload, execution_timeout=360):
+def executor_handler(payload):
     
     input_data = payload
     if not input_data:
@@ -25,7 +26,8 @@ def executor_handler(payload, execution_timeout=360):
     dependencies = input_data.get("dependencies", None)
     inputs = input_data.get("input", {})
     env_vars = input_data.get("env", {})
-    
+    execution_timeout=input_data.get("execution_timeout", BaseExecutor.EXECUTION_TIMEOUT)
+    logger.info(f"Execution timeout: {execution_timeout}")
     try:
         executor = get_executor(language)
         result = executor.execute(

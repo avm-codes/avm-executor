@@ -1,6 +1,7 @@
 FROM public.ecr.aws/lambda/python:3.12
 
-RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN dnf update -y
+RUN dnf install -y libpq-devel
 
 # Copy requirements.txt
 COPY requirements.txt .
