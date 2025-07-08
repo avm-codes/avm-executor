@@ -90,17 +90,17 @@ echo '__RESULT_END__' . PHP_EOL;
 """
         return code
 
-    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         """Executes PHP code directly without dependencies."""
         return subprocess.run(
             [self.php_path, code_file_path],
             capture_output=True,
             text=True,
-            timeout=self.EXECUTION_TIMEOUT,
+            timeout=execution_timeout,
             env={**os.environ, **env_vars}
         )
 
-    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         """Executes PHP code with Composer dependencies."""
         venv_dir = os.path.dirname(code_file_path)
         self.install_dependencies(dependencies, venv_dir)
@@ -120,7 +120,7 @@ require_once '{code_file_path}';
                     [self.php_path, wrapper_path],
                     capture_output=True,
                     text=True,
-                    timeout=self.EXECUTION_TIMEOUT,
+                    timeout=execution_timeout,
                     env={**os.environ, **env_vars}
                 )
                 return result
@@ -128,7 +128,7 @@ require_once '{code_file_path}';
                 if os.path.exists(wrapper_path):
                     os.remove(wrapper_path)
         
-        return self._execute_directly(code_file_path, inputs, env_vars)
+        return self._execute_directly(code_file_path, inputs, env_vars, execution_timeout)
 
     def _process_output(self, stdout: str) -> tuple[str, Dict[str, Any]]:
         """Processes the stdout to extract both regular output and the result object"""

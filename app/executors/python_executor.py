@@ -73,16 +73,16 @@ print('__RESULT_END__')
 """
         return code
 
-    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         return subprocess.run(
             [sys.executable, code_file_path],
             capture_output=True,
             text=True,
-            timeout=self.EXECUTION_TIMEOUT,
+            timeout=execution_timeout,
             env={**os.environ, **env_vars}
         )
 
-    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         venv_dir = os.path.join(os.path.dirname(code_file_path), "venv")
         venv.create(venv_dir, with_pip=True)
         self.install_dependencies(dependencies, venv_dir)
@@ -91,7 +91,7 @@ print('__RESULT_END__')
             [get_python_executable(venv_dir), code_file_path],
             capture_output=True,
             text=True,
-            timeout=self.EXECUTION_TIMEOUT,
+            timeout=execution_timeout,
             env={**os.environ, **env_vars}
         )
 

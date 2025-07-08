@@ -199,22 +199,22 @@ console.log('__RESULT_END__');
 """
         return code
 
-    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         venv_dir = os.path.dirname(code_file_path)
         self.install_dependencies(['typescript', 'ts-node'], venv_dir)
-        return self._run_ts_node(code_file_path, venv_dir, env_vars)
+        return self._run_ts_node(code_file_path, venv_dir, env_vars, execution_timeout)
 
-    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         venv_dir = os.path.dirname(code_file_path)
         self.install_dependencies(dependencies, venv_dir)
-        return self._run_ts_node(code_file_path, venv_dir, env_vars)
+        return self._run_ts_node(code_file_path, venv_dir, env_vars, execution_timeout)
 
-    def _run_ts_node(self, code_file_path: str, venv_dir: str, env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _run_ts_node(self, code_file_path: str, venv_dir: str, env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         return subprocess.run(
             [self.npx_path, "ts-node", code_file_path],
             capture_output=True,
             text=True,
-            timeout=self.EXECUTION_TIMEOUT,
+            timeout=execution_timeout,
             cwd=venv_dir,
             env={**os.environ, **env_vars}
         )

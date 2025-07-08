@@ -14,7 +14,7 @@ logging.basicConfig(
     ]
 )
 
-def executor_handler(payload):
+def executor_handler(payload, execution_timeout=360):
     
     input_data = payload
     if not input_data:
@@ -32,7 +32,8 @@ def executor_handler(payload):
             code=code,
             dependencies=dependencies,
             inputs=inputs,
-            env_vars=env_vars
+            env_vars=env_vars,
+            execution_timeout=execution_timeout
         )
         response = {
             "statusCode": 200,

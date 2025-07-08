@@ -33,12 +33,12 @@ class BaseExecutor(ABC):
         pass
 
     @abstractmethod
-    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         """Executes the code without dependencies"""
         pass
 
     @abstractmethod
-    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str]) -> subprocess.CompletedProcess:
+    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
         """Executes the code with installed dependencies"""
         pass
 
@@ -47,7 +47,7 @@ class BaseExecutor(ABC):
         """Processes the stdout to extract both regular output and the result object"""
         pass
 
-    def execute(self, code: str, dependencies: List[str] = None, inputs: Dict[str, Any] = None, env_vars: Dict[str, str] = None) -> Dict[str, Any]:
+    def execute(self, code: str, dependencies: List[str] = None, inputs: Dict[str, Any] = None, env_vars: Dict[str, str] = None, execution_timeout: int = EXECUTION_TIMEOUT) -> Dict[str, Any]:
         """Executes the code and returns the result"""
         try:
             start_time = time.time()
@@ -62,10 +62,10 @@ class BaseExecutor(ABC):
 
             if not dependencies:
                 logger.info("No dependencies detected. Executing code directly.")
-                result = self._execute_directly(code_file_path, inputs or {}, env_vars or {})
+                result = self._execute_directly(code_file_path, inputs or {}, env_vars or {}, execution_timeout)
             else:
                 logger.info(f"Dependencies found: {dependencies}. Using a virtual environment.")
-                result = self._execute_with_dependencies(code_file_path, dependencies, inputs or {}, env_vars or {})
+                result = self._execute_with_dependencies(code_file_path, dependencies, inputs or {}, env_vars or {}, execution_timeout)
 
             os.remove(code_file_path)
             stdout, output_data = self._process_output(result.stdout)
@@ -78,7 +78,7 @@ class BaseExecutor(ABC):
             }
 
         except subprocess.TimeoutExpired:
-            return {"error": f"Execution timed out. Max {self.EXECUTION_TIMEOUT} seconds"}
+            return {"error": f"Execution timed out. Max {execution_timeout} seconds"}
         except Exception as e:
             return {
                 "error": str(e),
