@@ -39,7 +39,7 @@ class PythonExecutor(BaseExecutor):
             return
         
         for dep in dependencies:
-            subprocess.run([get_pip_executable(venv_path), 'install', dep])
+            subprocess.run([get_pip_executable(venv_path), 'install', '-y', dep])
 
     def _get_file_extension(self) -> str:
         return ".py"
