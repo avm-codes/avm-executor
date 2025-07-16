@@ -53,6 +53,9 @@ class BaseExecutor(ABC):
             start_time = time.time()
             if not dependencies:
                 dependencies = self.get_dependencies(code)
+            else:
+                code_dependencies = self.get_dependencies(code)
+                dependencies = list(set(dependencies + code_dependencies))
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=self._get_file_extension()) as code_file:
                 code_file_path = code_file.name
