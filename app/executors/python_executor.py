@@ -39,7 +39,7 @@ class PythonExecutor(BaseExecutor):
             return
         
         for dep in dependencies:
-            subprocess.run([get_pip_executable(venv_path), 'install', '-y', dep])
+            subprocess.run(["pip", 'install', dep])
 
     def _get_file_extension(self) -> str:
         return ".py"
@@ -83,12 +83,13 @@ print('__RESULT_END__')
         )
 
     def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
-        venv_dir = os.path.join(os.path.dirname(code_file_path), "venv")
-        venv.create(venv_dir, with_pip=True)
-        self.install_dependencies(dependencies, venv_dir)
+        # venv_dir = os.path.join(os.path.dirname(code_file_path), "venv")
+        # venv.create(venv_dir, with_pip=True)
+        self.install_dependencies(dependencies, None)
         
         return subprocess.run(
-            [get_python_executable(venv_dir), code_file_path],
+            # [get_python_executable(venv_dir), code_file_path],
+            [sys.executable, code_file_path],
             capture_output=True,
             text=True,
             timeout=execution_timeout,
