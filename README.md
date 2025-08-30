@@ -1,26 +1,26 @@
 # AVM Execution Engine
 
-**Serverless Code Interpretation for AI Agents**
+**API-based Code Execution for AI Agents**
 
-AVM (Agents Virtual Machine) is a decentralized platform designed specifically for AI Agents code execution. This Docker-based execution engine provides secure, isolated, and scalable code interpretation capabilities with full AWS Lambda compatibility.
+AVM (Agents Virtual Machine) is a decentralized platform designed specifically for AI Agents code execution. This API-based execution engine provides secure, isolated, and scalable code interpretation capabilities using a VM library.
 
 ## 🚀 Features
 
 - **Multi-language Support**: Execute Python, TypeScript, and PHP code
-- **AWS Lambda Compatible**: Drop-in replacement for AWS Lambda runtime
-- **Secure Execution**: Containerized environment for safe code execution
+- **API-based**: REST API for code execution
+- **VM Library**: Uses VM library for code execution
 - **Input/Output Handling**: Support for structured data input and output
 - **Real-time Processing**: Fast code interpretation and execution
 - **Cloud-Ready**: Designed for deployment in any cloud infrastructure
 
 ## 🏗️ Architecture
 
-The AVM execution engine runs as a Docker container that exposes an AWS Lambda-compatible API endpoint. This allows you to:
+The AVM execution engine runs as a Flask API server that uses a VM library for code execution. This allows you to:
 
 - Deploy on your own cloud infrastructure
 - Maintain full control over your code execution environment
 - Scale horizontally based on demand
-- Integrate seamlessly with existing Lambda-based workflows
+- Integrate seamlessly with existing API-based workflows
 
 ## 🛠️ Quick Start
 
@@ -35,12 +35,12 @@ The AVM execution engine runs as a Docker container that exposes an AWS Lambda-c
 2. **Run the container:**
 
    ```bash
-   docker run -p 9000:8080 avm-executor
+   docker run -p 8080:8080 avm-executor
    ```
 
 3. **Test the execution engine:**
    ```bash
-   curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+   curl -XPOST "http://localhost:8080/execute" \
      -H "Content-Type: application/json" \
      -d '{
            "language": "python",

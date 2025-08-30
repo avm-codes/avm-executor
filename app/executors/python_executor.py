@@ -1,21 +1,9 @@
 import ast
 import sys
-import venv
-import subprocess
-import os
 import json
 from typing import List, Dict, Any
 from .base import BaseExecutor
-
-def get_pip_executable(venv_path: str) -> str:
-    if sys.platform == "win32":
-        return os.path.join(venv_path, "Scripts", "pip.exe")
-    return os.path.join(venv_path, "bin", "pip")
-
-def get_python_executable(venv_path: str) -> str:
-    if sys.platform == "win32":
-        return os.path.join(venv_path, "Scripts", "python.exe")
-    return os.path.join(venv_path, "bin", "python")
+from ..vm_library import acquire, exec as vm_exec, release
 
 class PythonExecutor(BaseExecutor):
     def get_dependencies(self, code: str) -> List[str]:
@@ -34,12 +22,12 @@ class PythonExecutor(BaseExecutor):
         
         return [dep for dep in dependencies if dep not in standard_lib_modules]
 
-    def install_dependencies(self, dependencies: List[str], venv_path: str):
+    def install_dependencies(self, dependencies: List[str]):
         if not dependencies:
             return
         
         for dep in dependencies:
-            subprocess.run([get_pip_executable(venv_path), 'install', '-y', dep])
+            pass # TODO: Implement pip install by using the vm_library
 
     def _get_file_extension(self) -> str:
         return ".py"
@@ -73,33 +61,48 @@ print('__RESULT_END__')
 """
         return code
 
-    def _execute_directly(self, code_file_path: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
-        return subprocess.run(
-            [sys.executable, code_file_path],
-            capture_output=True,
-            text=True,
-            timeout=execution_timeout,
-            env={**os.environ, **env_vars}
-        )
-
-    def _execute_with_dependencies(self, code_file_path: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int) -> subprocess.CompletedProcess:
-        venv_dir = os.path.join(os.path.dirname(code_file_path), "venv")
-        venv.create(venv_dir, with_pip=True)
-        self.install_dependencies(dependencies, venv_dir)
+    def _execute_directly(self, code: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int):
+        # Acquire a VM
+        vm_id = acquire()
         
-        return subprocess.run(
-            [get_python_executable(venv_dir), code_file_path],
-            capture_output=True,
-            text=True,
-            timeout=execution_timeout,
-            env={**os.environ, **env_vars}
-        )
+        # Execute code
+        result = vm_exec(vm_id, "python", code)
+
+        # Release the VM
+        release(vm_id)
+
+        return {
+            "stdout": result.get("stdout", ""),
+            "execution_time_seconds": result.get("execution_time", 0),
+            "error": result.get("stderr", None),
+            "vm_id": vm_id
+        }
+
+    def _execute_with_dependencies(self, code: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int):
+        # Acquire a VM
+        vm_id = acquire()
+
+        # Install dependencies
+        self.install_dependencies(dependencies)
+        
+        # Execute code
+        result = vm_exec(vm_id, "python", code)
+
+        # Release the VM
+        release(vm_id)
+
+        return {
+            "stdout": result.get("stdout", ""),
+            "execution_time_seconds": result.get("execution_time", 0),
+            "error": result.get("stderr", None),
+            "vm_id": vm_id
+        }
 
     def _process_output(self, stdout: str) -> tuple[str, Dict[str, Any]]:
         """Processes the stdout to extract both regular output and the result object"""
         try:
             parts = stdout.split('__RESULT_START__')
-            if len(parts) != 2:
+            if len(parts) < 2: # TODO: Should != 2 but vm_library is returning one more part of __RESULT_START__
                 return stdout, {}
 
             normal_output = parts[0].strip()

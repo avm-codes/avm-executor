@@ -1,11 +1,12 @@
+from flask import Flask, request, jsonify
 from .executors import get_executor
-from .executors.base import BaseExecutor
 import logging
 import json
 import dotenv
 
 dotenv.load_dotenv()
 
+# Setup logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO, 
@@ -15,20 +16,32 @@ logging.basicConfig(
     ]
 )
 
-def executor_handler(payload):
-    
-    input_data = payload
-    if not input_data:
-        raise ValueError("No json input received in PAYLOAD env var. Exit.")
-    
-    code = input_data.get("code", "")
-    language = input_data.get("language", "python")
-    dependencies = input_data.get("dependencies", None)
-    inputs = input_data.get("input", {})
-    env_vars = input_data.get("env", {})
-    execution_timeout=input_data.get("execution_timeout", BaseExecutor.EXECUTION_TIMEOUT)
-    logger.info(f"Execution timeout: {execution_timeout}")
+app = Flask(__name__)
+
+@app.route('/execute', methods=['POST'])
+def execute_code():
+    """
+    API endpoint to execute code using the VMs library
+    """
     try:
+        # Get JSON data from request
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Extract parameters
+        code = data.get("code", "")
+        language = data.get("language", "python")
+        dependencies = data.get("dependencies", None)
+        inputs = data.get("input", {})
+        env_vars = data.get("env", {})
+        execution_timeout = data.get("execution_timeout", 360)
+        
+        logger.info(f"Received execution request for language: {language}")
+        logger.info(f"Execution timeout: {execution_timeout}")
+        
+        # Get executor and execute code
         executor = get_executor(language)
         result = executor.execute(
             code=code,
@@ -37,16 +50,22 @@ def executor_handler(payload):
             env_vars=env_vars,
             execution_timeout=execution_timeout
         )
-        response = {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps(result)
-        }
-        return response
+        
+        return jsonify(result)
+        
     except ValueError as e:
-        raise ValueError(f"ValueError: {str(e)}")
+        logger.error(f"ValueError: {str(e)}")
+        return jsonify({"error": f"ValueError: {str(e)}"}), 400
     except Exception as e:
-        raise Exception(f"Error executing code: {str(e)}")
+        logger.error(f"Error executing code: {str(e)}")
+        return jsonify({"error": f"Error executing code: {str(e)}"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """
+    Health check endpoint
+    """
+    return jsonify({"status": "healthy", "service": "AVM Execution Engine"})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080, debug=True)
