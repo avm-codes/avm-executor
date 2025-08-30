@@ -2,3 +2,8 @@
 .DS_Store
 local_test.sh
 build-and-push.sh
+sst.config.ts
+test_apy.py
+
+# sst
+.sst
