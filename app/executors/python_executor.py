@@ -62,7 +62,6 @@ print('__RESULT_END__')
         return code
 
 
-
     def _process_output(self, stdout: str) -> tuple[str, Dict[str, Any]]:
         """Processes the stdout to extract both regular output and the result object"""
         try:
