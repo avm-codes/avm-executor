@@ -19,6 +19,7 @@ export default $config({
     const env = {
       VM_IP: new sst.Secret("VM_IP").value,
       VM_PORT: new sst.Secret("VM_PORT").value,
+      VM_POOL_SIZE: new sst.Secret("VM_POOL_SIZE").value,
     };
     const vpc = new sst.aws.Vpc("avm-executor-vpc");
     const cluster = new sst.aws.Cluster("avm-executor-cluster", { vpc });
