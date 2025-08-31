@@ -1,14 +1,12 @@
-import uuid
-import json
-import time
-import random
 import os
+import json
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-class AVMLibrary:
+
+class VMLibrary:
     """
-    AVM library that calls the real VM API endpoints.
+    VM library that calls the VM API endpoints.
     """
     
     def __init__(self):
@@ -120,12 +118,34 @@ class AVMLibrary:
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Failed to release VM {vm_id}: {e}")
             raise e
+    
+    def list_active(self) -> list:
+        """
+        Get list of currently active VMs.
+        
+        Returns:
+            list: List of active VM IDs
+        """
+        try:
+            # Call the VM API
+            response = requests.post(f"{self.base_url}/listActive")
+            response.raise_for_status()
+            
+            # Parse the response
+            data = response.json()
+            active_vms = data.get('active', [])
+            
+            print(f"[REAL] Found {len(active_vms)} active VMs")
+            return active_vms
+            
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] Failed to list active VMs: {e}")
+            raise e
 
 
-# Global instance for easy access
-vm_library = AVMLibrary()
+# Global instances
+vm_library = VMLibrary()
 
-# Convenience functions to match expected API
 def acquire() -> str:
     """Convenience function to acquire a VM"""
     return vm_library.acquire()
@@ -136,4 +156,8 @@ def exec(vm_id: str, language: str, code: str) -> Dict[str, Any]:
 
 def release(vm_id: str) -> Dict[str, Any]:
     """Convenience function to release a VM"""
-    return vm_library.release(vm_id) 
+    return vm_library.release(vm_id)
+
+def list_active() -> list:
+    """Direct function to list active VMs"""
+    return vm_library.list_active() 

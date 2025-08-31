@@ -1,11 +1,11 @@
 from .python_executor import PythonExecutor
 from .typescript_executor import TypeScriptExecutor
-from .php_executor import PHPExecutor
+# from .php_executor import PHPExecutor  # Temporarily disabled
 
 EXECUTORS = {
     "python": PythonExecutor,
     "typescript": TypeScriptExecutor,
-    # "php": PHPExecutor
+    # "php": PHPExecutor  # Temporarily disabled
 }
 
 def get_executor(language: str):

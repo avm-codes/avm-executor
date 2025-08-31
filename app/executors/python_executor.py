@@ -3,7 +3,7 @@ import sys
 import json
 from typing import List, Dict, Any
 from .base import BaseExecutor
-from ..vm_library import acquire, exec as vm_exec, release
+
 
 class PythonExecutor(BaseExecutor):
     def get_dependencies(self, code: str) -> List[str]:
@@ -61,42 +61,7 @@ print('__RESULT_END__')
 """
         return code
 
-    def _execute_directly(self, code: str, inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int):
-        # Acquire a VM
-        vm_id = acquire()
-        
-        # Execute code
-        result = vm_exec(vm_id, "python", code)
 
-        # Release the VM
-        release(vm_id)
-
-        return {
-            "stdout": result.get("stdout", ""),
-            "execution_time_seconds": result.get("execution_time", 0),
-            "error": result.get("stderr", None),
-            "vm_id": vm_id
-        }
-
-    def _execute_with_dependencies(self, code: str, dependencies: List[str], inputs: Dict[str, Any], env_vars: Dict[str, str], execution_timeout: int):
-        # Acquire a VM
-        vm_id = acquire()
-
-        # Install dependencies
-        self.install_dependencies(dependencies)
-        
-        # Execute code
-        result = vm_exec(vm_id, "python", code)
-
-        # Release the VM
-        release(vm_id)
-
-        return {
-            "stdout": result.get("stdout", ""),
-            "execution_time_seconds": result.get("execution_time", 0),
-            "error": result.get("stderr", None),
-            "vm_id": vm_id
-        }
 
     def _process_output(self, stdout: str) -> tuple[str, Dict[str, Any]]:
         """Processes the stdout to extract both regular output and the result object"""

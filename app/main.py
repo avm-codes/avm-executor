@@ -45,6 +45,7 @@ def execute_code():
         executor = get_executor(language)
         result = executor.execute(
             code=code,
+            language=language,
             dependencies=dependencies,
             inputs=inputs,
             env_vars=env_vars,
